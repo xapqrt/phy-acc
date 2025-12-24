@@ -106,6 +106,7 @@ document.getElementById('coulombModeBtn').addEventListener('click', () => {
     document.getElementById('coulombModeBtn').classList.add('active');
     document.getElementById('rfModeBtn').classList.remove('active');
     document.getElementById('scopeModeBtn').classList.remove('active');
+    document.getElementById('tokamakModeBtn').classList.remove('active');
     document.getElementById('modeInfo').textContent = 'Click: +charge | Shift+Click: -charge';
     console.log('switched to coulomb mode');
 });
@@ -115,6 +116,7 @@ document.getElementById('rfModeBtn').addEventListener('click', () => {
     document.getElementById('rfModeBtn').classList.add('active');
     document.getElementById('coulombModeBtn').classList.remove('active');
     document.getElementById('scopeModeBtn').classList.remove('active');
+    document.getElementById('tokamakModeBtn').classList.remove('active');
     document.getElementById('modeInfo').textContent = 'Click: place transmitter | Shift+Click: place receiver';
     
     // Clear coulomb stuff
@@ -129,9 +131,26 @@ document.getElementById('scopeModeBtn').addEventListener('click', () => {
     document.getElementById('scopeModeBtn').classList.add('active');
     document.getElementById('coulombModeBtn').classList.remove('active');
     document.getElementById('rfModeBtn').classList.remove('active');
+    document.getElementById('tokamakModeBtn').classList.remove('active');
     document.getElementById('modeInfo').textContent = 'Q/W: freq X | A/S: freq Y | Z/X: phase | C/V: amplitude | M: mic';
     
     console.log('switched to oscilloscope mode');
+});
+
+document.getElementById('tokamakModeBtn').addEventListener('click', () => {
+    currentMode = 'tokamak';
+    document.getElementById('tokamakModeBtn').classList.add('active');
+    document.getElementById('coulombModeBtn').classList.remove('active');
+    document.getElementById('rfModeBtn').classList.remove('active');
+    document.getElementById('scopeModeBtn').classList.remove('active');
+    document.getElementById('modeInfo').textContent = '1/2: B_toroidal | 3/4: B_poloidal | 5/6: turbulence | R: reset';
+    
+    // Init plasma
+    if(plasmaParticles.length === 0) {
+        spawnPlasma();
+    }
+    
+    console.log('switched to tokamak mode');
 });
 
 // Clear button
@@ -336,6 +355,36 @@ function animate() {
         }
         
         drawScopeControls();
+    } else if(currentMode === 'tokamak') {
+        // update plasma particles with lorentz force  
+        let escaped = 0;
+        for(let i = plasmaParticles.length - 1; i >= 0; i--) {
+            plasmaParticles[i].update();
+            
+            // check if escaped tokamak (r > 250 basically)
+            let dx = plasmaParticles[i].x - canvas.width/2;
+            let dy = plasmaParticles[i].y - canvas.height/2;
+            let dist_from_center = Math.sqrt(dx*dx + dy*dy);
+            
+            if(dist_from_center > 250 || dist_from_center < 100) {
+                plasmaParticles.splice(i, 1);  
+                escaped++;
+            } 
+        }
+        
+        // integrity drops if particles escape
+        if(escaped > 0) {
+            integrity -= (escaped / 300) * 0.5;  // lose integrity based on escape rate  
+            if(integrity < 0) integrity = 0;
+        }
+        
+        // draw all particles
+        for(let p of plasmaParticles) {
+            p.draw();
+        }
+        
+        drawTokamak();
+        drawTokamakControls();
     }
     
     // Draw FPS counter
