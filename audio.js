@@ -22,21 +22,17 @@ function initAudio() {
     console.log('audio engine started - 60hz hum');
 }
 
-// Play spark sound when placing charges
+// Play spark sound (TODO: when placing charges)
 function playSpark() {
     if (!audioContext) return;
     
     const sparkOsc = audioContext.createOscillator();
     const sparkGain = audioContext.createGain();
     
-    sparkOsc.frequency.value = 800;  // start freq (bright spark)
-    sparkOsc.type = 'square';  // harsh electric sound
+    sparkOsc.frequency.value = 800;  // start freq
+    sparkOsc.type = 'square';
     
-    // Frequency sweep down (sounds like electric discharge)
-    sparkOsc.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.08);
-    
-    // Volume envelope (attack/decay)
-    sparkGain.gain.value = 0.15;
+    sparkGain.gain.value = 0.1;
     sparkGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
     
     sparkOsc.connect(sparkGain);

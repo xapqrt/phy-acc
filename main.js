@@ -76,6 +76,7 @@ console.log('particle phy loaded');
 let particles = [];
 let charges = [];
 let particleCount = 2000;
+let showFieldLines = false;  // toggle for field line visualization
 
 function spawnParticles() {
     particles = [];
@@ -96,6 +97,14 @@ spawnParticles();
 document.getElementById('clearBtn').addEventListener('click', () => {
     charges = [];
     console.log('cleared all charges');
+});
+
+// Field line toggle button
+const fieldLineBtn = document.getElementById('fieldLineBtn');
+fieldLineBtn.addEventListener('click', () => {
+    showFieldLines = !showFieldLines;
+    fieldLineBtn.textContent = showFieldLines ? 'Hide Field Lines' : 'Show Field Lines';
+    console.log('field lines: ' + (showFieldLines ? 'ON' : 'OFF'));
 });
 
 // Particle count slider
@@ -133,7 +142,6 @@ canvas.addEventListener('mousedown', (e) => {
     const q = e.shiftKey ? -1 : 1;  // shift = negative
     
     charges.push({ x, y, q });
-    playSpark();  // spark sound!
     console.log('placed ' + (q > 0 ? '+' : '-') + ' charge at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
 });
 
@@ -142,6 +150,11 @@ function animate() {
     // Darker fade for better phosphor trails
     ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
     ctx.fillRect(0, 0, 800, 600);
+    
+    // Draw field lines (vector field) if enabled
+    if (showFieldLines && charges.length > 0) {
+        drawFieldVectors();
+    }
     
     // Update particles
     for (let p of particles) {
@@ -190,6 +203,67 @@ function animate() {
     }
     
     requestAnimationFrame(animate);
+}
+
+// Draw vector field arrows at grid points
+function drawFieldVectors() {
+    const gridSpacing = 50;  // pixels between arrows
+    const arrowScale = 0.8;   // arrow length multiplier
+    
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.4)';
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.4)';
+    ctx.lineWidth = 1.5;
+    
+    for (let x = gridSpacing; x < 800; x += gridSpacing) {
+        for (let y = gridSpacing; y < 600; y += gridSpacing) {
+            // Calculate E-field at this point
+            let Ex = 0, Ey = 0;
+            
+            for (let c of charges) {
+                const dx = x - c.x;
+                const dy = y - c.y;
+                const r2 = dx*dx + dy*dy + 10;
+                
+                if (r2 < 400) continue;  // skip too close to charges
+                
+                const r = Math.sqrt(r2);
+                const E_mag = k * c.q / r2;
+                
+                Ex += E_mag * dx / r;
+                Ey += E_mag * dy / r;
+            }
+            
+            // Normalize and scale
+            const mag = Math.sqrt(Ex*Ex + Ey*Ey);
+            if (mag < 0.5) continue;  // skip weak fields
+            
+            const scale = Math.min(gridSpacing * arrowScale, mag * 0.05);
+            const ex = Ex / mag * scale;
+            const ey = Ey / mag * scale;
+            
+            // Draw arrow
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + ex, y + ey);
+            ctx.stroke();
+            
+            // Arrowhead
+            const angle = Math.atan2(ey, ex);
+            const headLen = 4;
+            ctx.beginPath();
+            ctx.moveTo(x + ex, y + ey);
+            ctx.lineTo(
+                x + ex - headLen * Math.cos(angle - Math.PI/6),
+                y + ey - headLen * Math.sin(angle - Math.PI/6)
+            );
+            ctx.moveTo(x + ex, y + ey);
+            ctx.lineTo(
+                x + ex - headLen * Math.cos(angle + Math.PI/6),
+                y + ey - headLen * Math.sin(angle + Math.PI/6)
+            );
+            ctx.stroke();
+        }
+    }
 }
 
 animate();
