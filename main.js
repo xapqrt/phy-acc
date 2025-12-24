@@ -181,43 +181,76 @@ canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
 });
 
+// FPS counter
+let lastTime = performance.now();
+let fps = 60;
+
 // Animation loop
 function animate() {
-    // Darker fade for better phosphor trails
+    
+
+
+    const now = performance.now();
+    const delta = now - lastTime;
+    lastTime = now;
+
+
+    fps = Math.round(1000 / delta);
+    
+    // darker fade for better phosphor trails
+
+
+
     ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
     ctx.fillRect(0, 0, 800, 600);
     
-    // Draw field lines (vector field) if enabled
+
+
+
     if (showFieldLines && charges.length > 0) {
         drawFieldVectors();
     }
     
     // Update particles
+
+
     for (let p of particles) {
         p.applyForce(charges);
         p.update();
         
+
+
         // Bounce off edges
         if (p.x < 0) p.x = 0, p.vx *= -0.5;
+
         if (p.x > 800) p.x = 800, p.vx *= -0.5;
         if (p.y < 0) p.y = 0, p.vy *= -0.5;
+
         if (p.y > 600) p.y = 600, p.vy *= -0.5;
         
         p.draw();
     }
     
     // Draw charges with better glow
+
+
     for (let c of charges) {
         const color = c.q > 0 ? '#ff0000' : '#0000ff';
         
         // Outer glow
+
+
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.15;
         ctx.beginPath();
+
+
         ctx.arc(c.x, c.y, 20, 0, Math.PI * 2);
         ctx.fill();
         
-        // Middle glow
+        // middle glow
+
+
         ctx.globalAlpha = 0.3;
         ctx.beginPath();
         ctx.arc(c.x, c.y, 12, 0, Math.PI * 2);
@@ -226,17 +259,31 @@ function animate() {
         
         // Charge core
         ctx.fillStyle = color;
+
+
         ctx.beginPath();
         ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
         ctx.fill();
         
+
         // Label
         ctx.fillStyle = '#fff';
+
         ctx.font = '16px Courier New';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(c.q > 0 ? '+' : '−', c.x, c.y);
     }
+    
+    // Draw FPS counter
+
+    ctx.fillStyle = '#00ff00';
+    ctx.font = '14px Courier New';
+
+    ctx.textAlign = 'left';
+    
+    ctx.textBaseline = 'top';
+    ctx.fillText('FPS: ' + fps, 10, 10);
     
     requestAnimationFrame(animate);
 }
