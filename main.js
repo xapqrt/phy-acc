@@ -139,10 +139,42 @@ canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    
+    // Right click to remove nearest charge
+    if(e.button === 2) {
+        let nearestDist = 20;  // max distance to remove
+        let nearestIdx = -1;
+        
+        for(let i = 0; i < charges.length; i++) {
+            const dx = x - charges[i].x;
+            const dy = y - charges[i].y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if(dist < nearestDist) {
+                nearestDist = dist;
+                nearestIdx = i;
+            }
+        }
+        
+        if(nearestIdx !== -1) {
+            charges.splice(nearestIdx, 1);
+            console.log('removed charge at index ' + nearestIdx);
+        }
+        
+        e.preventDefault();  // prevent context menu
+        return;
+    }
+    
+    // Left click to place charge
     const q = e.shiftKey ? -1 : 1;  // shift = negative
     
     charges.push({ x, y, q });
     console.log('placed ' + (q > 0 ? '+' : '-') + ' charge at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
+});
+
+// Prevent context menu on canvas
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
 });
 
 // Animation loop
@@ -205,66 +237,111 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// Draw vector field arrows at grid points
-function drawFieldVectors() {
-    const gridSpacing = 50;  // pixels between arrows
-    const arrowScale = 0.8;   // arrow length multiplier
-    
-    ctx.strokeStyle = 'rgba(0, 255, 0, 0.4)';
-    ctx.fillStyle = 'rgba(0, 255, 0, 0.4)';
+
+
+
+
+//draw vector field arrows at grid points
+
+
+
+function drawFieldvectors() {
+
+
+    const gridSpacing = 50;
+    const arrowScale = 0.8;
+
+
+
+    ctx.strokeStyle = 'rgba(0,255,0,0.4)';
+    ctx.fillStyle = 'rgba(0,255,0,0.4)';
+
     ctx.lineWidth = 1.5;
-    
-    for (let x = gridSpacing; x < 800; x += gridSpacing) {
-        for (let y = gridSpacing; y < 600; y += gridSpacing) {
-            // Calculate E-field at this point
+
+
+
+    for(let x = gridSpacing; x < 800; x += gridSpacing) {
+
+        for(let y = gridSpacing; y < 600; y+= gridSpacing) {
+
+
             let Ex = 0, Ey = 0;
-            
+
             for (let c of charges) {
+
                 const dx = x - c.x;
                 const dy = y - c.y;
                 const r2 = dx*dx + dy*dy + 10;
-                
-                if (r2 < 400) continue;  // skip too close to charges
-                
+
+                if(r2 < 400) continue;
+
+
                 const r = Math.sqrt(r2);
-                const E_mag = k * c.q / r2;
-                
-                Ex += E_mag * dx / r;
-                Ey += E_mag * dy / r;
+
+                const E_mag = k * c.q /r2;
+
+
+                Ex += E_mag * dx /r;
+                Ey += E_mag * dy/r;
+
             }
-            
-            // Normalize and scale
+
+
+
             const mag = Math.sqrt(Ex*Ex + Ey*Ey);
-            if (mag < 0.5) continue;  // skip weak fields
-            
+
+            if(mag < 0.5) continue;
+
+
             const scale = Math.min(gridSpacing * arrowScale, mag * 0.05);
+
             const ex = Ex / mag * scale;
             const ey = Ey / mag * scale;
-            
-            // Draw arrow
+
+
             ctx.beginPath();
             ctx.moveTo(x, y);
+
             ctx.lineTo(x + ex, y + ey);
             ctx.stroke();
-            
-            // Arrowhead
-            const angle = Math.atan2(ey, ex);
+
+
+
+
+            const angle = Math.atan2(ey, ex)
             const headLen = 4;
             ctx.beginPath();
-            ctx.moveTo(x + ex, y + ey);
-            ctx.lineTo(
-                x + ex - headLen * Math.cos(angle - Math.PI/6),
-                y + ey - headLen * Math.sin(angle - Math.PI/6)
+            ctx.moveTo(x + ex, y+ ey);
+
+
+            ctx.ineTo (
+
+                x+ ex - headLen * Math.cos(angle - Math.PI/6),
+                y + ey- headLen * Math.sin(angle - Math.PI/6)
             );
+
+
+
+
             ctx.moveTo(x + ex, y + ey);
+
             ctx.lineTo(
-                x + ex - headLen * Math.cos(angle + Math.PI/6),
-                y + ey - headLen * Math.sin(angle + Math.PI/6)
+
+                x + ex - headLen * Math.cos(angle + Math.PI/6);
+                y + ey - headLen * Math.sin(angle + Math.PI/6);
+
             );
+
             ctx.stroke();
+
+
+
+
         }
     }
 }
 
+
+
 animate();
-console.log('animation started');
+console.log('animation started!');
