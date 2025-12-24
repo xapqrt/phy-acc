@@ -92,7 +92,7 @@ h1 {
     </head>
 
     <body>
-        <h1>⚡ FIELD OPERATOR ⚡</h1>
+        <h1>FIELD OPERATOR</h1>
         <canvas id="canvas" width="800" height="600"></canvas>
         <div class="info">
             Click: +charge | Shift+Click: -charge
@@ -102,6 +102,10 @@ h1 {
             <div class="slider-group">
                 <label id="countLabel">Particles: 2000</label>
                 <input type="range" id="particleSlider" min="500" max="5000" step="500" value="2000">
+            </div>
+            <div class="slider-group">
+                <label id="volumeLabel">Volume: 50%</label>
+                <input type="range" id="volumeSlider" min="0" max="100" value="50">
             </div>
         </div>
 
@@ -202,22 +206,60 @@ class Particle {
 
 console.log('particle phy loaded');
 
+// Web Audio API setup
+let audioContext = null;
+let oscillator = null;
+let gainNode = null;
+
+function initAudio() {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // 60hz hum (mains frequency)
+    oscillator = audioContext.createOscillator();
+    oscillator.frequency.value = 60;  // Hz
+    oscillator.type = 'sine';
+    
+    // Gain node for volume control
+    gainNode = audioContext.createGain();
+    gainNode.gain.value = 0.15;  // default volume
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start();
+    console.log('audio engine started - 60hz hum');
+}
+
 // Arrays for particles and charges
 let particles = [];
 let charges = [];
+
+
+
+
+
 let particleCount = 2000;
 
-// Spawn particles function
+
+
+
 function spawnParticles() {
+
+
+
     particles = [];
-    for (let i = 0; i < particleCount; i++) {
+
+    for(let i = 0; i < particleCount; i++) {
+
         particles.push(new Particle(
+
             Math.random() * 800,
             Math.random() * 600,
-            0  // neutral charge
+            0
+
         ));
     }
-    console.log(`🧲 spawned ${particleCount} particles`);
+    console.log('spawned ' + particleCount + ' particles');
 }
 
 spawnParticles();
@@ -225,28 +267,48 @@ spawnParticles();
 // Clear button
 document.getElementById('clearBtn').addEventListener('click', () => {
     charges = [];
-    console.log('🧹 cleared all charges');
+    console.log('cleared all charges');
 });
 
 // Particle count slider
 const slider = document.getElementById('particleSlider');
 const countLabel = document.getElementById('countLabel');
 
+
+
+
 slider.addEventListener('input', (e) => {
     particleCount = parseInt(e.target.value);
-    countLabel.textContent = `Particles: ${particleCount}`;
+    countLabel.textContent = 'Particles: ' + particleCount;
     spawnParticles();
+});
+
+// Volume slider
+const volumeSlider = document.getElementById('volumeSlider');
+const volumeLabel = document.getElementById('volumeLabel');
+
+volumeSlider.addEventListener('input', (e) => {
+    const vol = parseInt(e.target.value);
+    volumeLabel.textContent = 'Volume: ' + vol + '%';
+    if (gainNode) {
+        gainNode.gain.value = vol / 100 * 0.3;  // scale to reasonable range
+    }
 });
 
 // Mouse click to place charges
 canvas.addEventListener('mousedown', (e) => {
+    // Init audio on first user interaction
+    if (!audioContext) {
+        initAudio();
+    }
+    
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const q = e.shiftKey ? -1 : 1;  // shift = negative
     
     charges.push({ x, y, q });
-    console.log(`⚡ placed ${q > 0 ? '+' : '-'} charge at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+    console.log('placed ' + (q > 0 ? '+' : '-') + ' charge at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
 });
 
 // Animation loop
