@@ -45,6 +45,49 @@ h1 {
     text-align: center;
     margin-top: 10px;
 }
+
+.controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-top: 15px;
+    padding: 15px;
+    border: 2px solid #00ff00;
+    background: #001100;
+}
+
+.controls button {
+    padding: 10px 20px;
+    background: #003300;
+    border: 2px solid #00ff00;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.controls button:hover {
+    background: #00ff00;
+    color: #000;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.slider-group label {
+    font-size: 0.85em;
+    color: #00aa00;
+}
+
+.slider-group input[type="range"] {
+    width: 200px;
+    cursor: pointer;
+}
         </style>
     </head>
 
@@ -53,6 +96,13 @@ h1 {
         <canvas id="canvas" width="800" height="600"></canvas>
         <div class="info">
             Click: +charge | Shift+Click: -charge
+        </div>
+        <div class="controls">
+            <button id="clearBtn">Clear All Charges</button>
+            <div class="slider-group">
+                <label id="countLabel">Particles: 2000</label>
+                <input type="range" id="particleSlider" min="500" max="5000" step="500" value="2000">
+            </div>
         </div>
 
         <script>
@@ -114,21 +164,34 @@ class Particle {
     }
 
     draw() {
-        // Draw phosphor trail
-        if (this.trail.length > 1) {
+      
+
+
+        if(this.trail.length > 1) {
+
+
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 1;
             ctx.globalAlpha = phosphor_alpha;
             ctx.beginPath();
+
+
             ctx.moveTo(this.trail[0].x, this.trail[0].y);
-            for (let i = 1; i < this.trail.length; i++) {
+
+            for(let i = 1; i<this.trail.length; i++) {
+
                 ctx.lineTo(this.trail[i].x, this.trail[i].y);
+
             }
+
+
             ctx.stroke();
             ctx.globalAlpha = 1.0;
         }
-        
-        // Draw particle
+
+
+
+
         ctx.fillStyle = '#00ff00';
         ctx.beginPath();
         ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
@@ -142,16 +205,38 @@ console.log('particle phy loaded');
 // Arrays for particles and charges
 let particles = [];
 let charges = [];
+let particleCount = 2000;
 
-// Spawn 2000 neutral particles
-for (let i = 0; i < 2000; i++) {
-    particles.push(new Particle(
-        Math.random() * 800,
-        Math.random() * 600,
-        0  // neutral charge
-    ));
+// Spawn particles function
+function spawnParticles() {
+    particles = [];
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle(
+            Math.random() * 800,
+            Math.random() * 600,
+            0  // neutral charge
+        ));
+    }
+    console.log(`🧲 spawned ${particleCount} particles`);
 }
-console.log('🧲 spawned 2000 particles');
+
+spawnParticles();
+
+// Clear button
+document.getElementById('clearBtn').addEventListener('click', () => {
+    charges = [];
+    console.log('🧹 cleared all charges');
+});
+
+// Particle count slider
+const slider = document.getElementById('particleSlider');
+const countLabel = document.getElementById('countLabel');
+
+slider.addEventListener('input', (e) => {
+    particleCount = parseInt(e.target.value);
+    countLabel.textContent = `Particles: ${particleCount}`;
+    spawnParticles();
+});
 
 // Mouse click to place charges
 canvas.addEventListener('mousedown', (e) => {
