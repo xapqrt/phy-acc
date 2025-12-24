@@ -1,0 +1,77 @@
+body {
+    margin: 0;
+    padding: 20px;
+    background: #000;
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#canvas {
+    display: block;
+    background: #000;
+    border: 3px solid #00ff00;
+    cursor: crosshair;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.4);
+    margin: 20px 0;
+}
+
+h1 {
+    text-align: center;
+    text-shadow: 0 0 15px #00ff00;
+    font-size: 2.5em;
+    margin: 10px 0;
+    letter-spacing: 3px;
+}
+
+.info {
+    color: #00aa00;
+    font-size: 0.9em;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-top: 15px;
+    padding: 15px;
+    border: 2px solid #00ff00;
+    background: #001100;
+}
+
+.controls button {
+    padding: 10px 20px;
+    background: #003300;
+    border: 2px solid #00ff00;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.controls button:hover {
+    background: #00ff00;
+    color: #000;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.slider-group label {
+    font-size: 0.85em;
+    color: #00aa00;
+}
+
+.slider-group input[type="range"] {
+    width: 200px;
+    cursor: pointer;
+}
