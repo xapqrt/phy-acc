@@ -73,7 +73,7 @@ class WaveParticle {
         const osc = Math.sin(this.phase) * 0.5 + 0.5;
         const brightness = this.intensity * osc * 255;
 
-        ctx.fillStyle = 'rgb(0, '_ Math.floor(brightness) + ',255)';
+        ctx.fillStyle = 'rgb(0,' Math.floor(brightness) + ',255)';
 
 
         ctx.globalAlpha = this.intensity;

@@ -105,6 +105,7 @@ document.getElementById('coulombModeBtn').addEventListener('click', () => {
     currentMode = 'coulomb';
     document.getElementById('coulombModeBtn').classList.add('active');
     document.getElementById('rfModeBtn').classList.remove('active');
+    document.getElementById('scopeModeBtn').classList.remove('active');
     document.getElementById('modeInfo').textContent = 'Click: +charge | Shift+Click: -charge';
     console.log('switched to coulomb mode');
 });
@@ -113,6 +114,7 @@ document.getElementById('rfModeBtn').addEventListener('click', () => {
     currentMode = 'rf';
     document.getElementById('rfModeBtn').classList.add('active');
     document.getElementById('coulombModeBtn').classList.remove('active');
+    document.getElementById('scopeModeBtn').classList.remove('active');
     document.getElementById('modeInfo').textContent = 'Click: place transmitter | Shift+Click: place receiver';
     
     // Clear coulomb stuff
@@ -120,6 +122,16 @@ document.getElementById('rfModeBtn').addEventListener('click', () => {
     particles = [];
     
     console.log('switched to RF mode');
+});
+
+document.getElementById('scopeModeBtn').addEventListener('click', () => {
+    currentMode = 'scope';
+    document.getElementById('scopeModeBtn').classList.add('active');
+    document.getElementById('coulombModeBtn').classList.remove('active');
+    document.getElementById('rfModeBtn').classList.remove('active');
+    document.getElementById('modeInfo').textContent = 'Q/W: freq X | A/S: freq Y | Z/X: phase | C/V: amplitude | M: mic';
+    
+    console.log('switched to oscilloscope mode');
 });
 
 // Clear button
@@ -315,6 +327,15 @@ function animate() {
                 wp.draw();
             }
         }
+    } else if(currentMode === 'scope') {
+        // Oscilloscope mode
+        if(micActive) {
+            drawMicScope();
+        } else {
+            drawLissajous();
+        }
+        
+        drawScopeControls();
     }
     
     // Draw FPS counter
