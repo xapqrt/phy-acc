@@ -47,8 +47,12 @@ class Particle {
     }
 
     draw() {
+        // Color based on velocity (faster = brighter)
+        const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+        const brightness = Math.min(255, 100 + speed * 50);  // scale velocity to brightness
+        
         if (this.trail.length > 1) {
-            ctx.strokeStyle = '#00ff00';
+            ctx.strokeStyle = 'rgb(0,' + Math.floor(brightness) + ',0)';
             ctx.lineWidth = 1;
             ctx.globalAlpha = phosphor_alpha;
             ctx.beginPath();
@@ -63,7 +67,7 @@ class Particle {
             ctx.globalAlpha = 1.0;
         }
 
-        ctx.fillStyle = '#00ff00';
+        ctx.fillStyle = 'rgb(0,' + Math.floor(brightness) + ',0)';
         ctx.beginPath();
         ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
         ctx.fill();
