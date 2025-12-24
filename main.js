@@ -133,6 +133,7 @@ canvas.addEventListener('mousedown', (e) => {
     const q = e.shiftKey ? -1 : 1;  // shift = negative
     
     charges.push({ x, y, q });
+    playSpark();  // spark sound!
     console.log('placed ' + (q > 0 ? '+' : '-') + ' charge at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
 });
 
