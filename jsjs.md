@@ -1,40 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Field Operator</title>
-    <style>
-        body {
-            margin: 0;
-            background: #000;
-            font-family: 'Courier New', monospace;
-            color: #00ff00;
-        }
-        #canvas {
-            display: block;
-background: #000;
-            border: 2px solid #00ff00;
-            cursor: crosshair;
-        }
-        h1 {
-            text-align: center;
-            text-shadow: 0 0 10px #00ff00;
-        }
-    </style>
-</head>
-<body>
-    <h1>⚡ Field Operator</h1>
-    <canvas id="canvas" width="800" height="600"></canvas>
+// Coulomb constant (scaled way down for canvas pixels lol)
+const k = 5000;
+const drag = 0.95;  // makes particles settle nice
+
+// Charged particle class
+class Particle {
+    constructor(x, y, q) {
+        this.x = x;
+        this.y = y;
+        this.vx = 0;
+        this.vy = 0;
+        this.q = q;  // charge
+    }
     
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Test draw
-        ctx.fillStyle = '#00ff00';
-        ctx.fillRect(100, 100, 50, 50);
-        
-        console.log('canvas ready');
-    </script>
-</body>
-</html>
+    // Coulomb force: F = k*q1*q2/r^2
+    applyForce(charges) {
+        for (let c of charges) {
+            const dx = this.x - c.x;
+            const dy = this.y - c.y;
+            const r2 = dx*dx + dy*dy + 1;  // +1 prevents singularity
+            
+            if (r2 < 0.1) continue;
+            
+            const r = Math.sqrt(r2);
+            const force = k * this.q * c.q / r2;
+            
+            this.vx += force * dx/r * 0.001;
+            this.vy += force * dy/r * 0.001;
+        }
+    }
+    
+    update() {
+        this.vx *= drag;
+        this.vy *= drag;
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+    
+    draw() {
+        ctx.fillStyle = '#888';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+        ctx.fill();
+    }
+}
+
+console.log('particle physics loaded');

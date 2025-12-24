@@ -12,94 +12,207 @@
 
 
 body {
-
     margin: 0;
+    padding: 20px;
     background: #000;
     font-family: 'Courier New', monospace;
-    color: #0f0
-
+    color: #00ff00;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 #canvas {
-
     display: block;
     background: #000;
-    border: 2px solid #0ff000;
+    border: 3px solid #00ff00;
     cursor: crosshair;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.4);
+    margin: 20px 0;
 }
 
-
-
-
 h1 {
+    text-align: center;
+    text-shadow: 0 0 15px #00ff00;
+    font-size: 2.5em;
+    margin: 10px 0;
+    letter-spacing: 3px;
+}
 
-    text-align:center;
-    text-shadow: 0 0 10px #0ff000;
-
-
+.info {
+    color: #00aa00;
+    font-size: 0.9em;
+    text-align: center;
+    margin-top: 10px;
 }
         </style>
     </head>
 
     <body>
-
-
-
-        <h1>Field Operator</h1>
-
-        <canvas id = "canvas" width="800" height="600"></canvas>
+        <h1>⚡ FIELD OPERATOR ⚡</h1>
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <div class="info">
+            Click: +charge | Shift+Click: -charge
+        </div>
 
         <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// Coulomb constant (scaled way down for canvas pixels lol)
-const k = 5000;
-const drag = 0.95;  // makes particles settle nice
 
-// Charged particle class
+
+
+
+
+//coulomb constant
+
+
+//(i scaled it way down for canvas pixels)
+
+const k = 5000;
+const drag = 0.95;
+
+
 class Particle {
-    constructor(x, y, q) {
+
+    constructor(x,y,q) {
+
         this.x = x;
         this.y = y;
         this.vx = 0;
-        this.vy = 0;
-        this.q = q;  // charge
+        this.vy - 0;
+        this.q = q;
+
+
     }
-    
-    // Coulomb force: F = k*q1*q2/r^2
+
+
+
+
+
     applyForce(charges) {
+
         for (let c of charges) {
+
             const dx = this.x - c.x;
             const dy = this.y - c.y;
-            const r2 = dx*dx + dy*dy + 1;  // +1 prevents singularity
-            
-            if (r2 < 0.1) continue;
-            
+            const r2 = dx*dx + dy*dy + 1;
+
+            if(r2 < 0.1) continue;
             const r = Math.sqrt(r2);
-            const force = k * this.q * c.q / r2;
-            
+
+            const force =  k* this.q * c.q/ r2;
+
+
             this.vx += force * dx/r * 0.001;
             this.vy += force * dy/r * 0.001;
+
+
         }
     }
-    
+
+
     update() {
+
         this.vx *= drag;
         this.vy *= drag;
         this.x += this.vx;
         this.y += this.vy;
+
     }
-    
+
+
+
     draw() {
+
         ctx.fillStyle = '#888';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+
+            ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
         ctx.fill();
+        
     }
 }
 
-console.log('particle physics loaded');
+
+console.log('particle phy loaded');
+
+// Arrays for particles and charges
+let particles = [];
+let charges = [];
+
+// Spawn 2000 neutral particles
+for (let i = 0; i < 2000; i++) {
+    particles.push(new Particle(
+        Math.random() * 800,
+        Math.random() * 600,
+        0  // neutral charge
+    ));
+}
+console.log('🧲 spawned 2000 particles');
+
+// Mouse click to place charges
+canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const q = e.shiftKey ? -1 : 1;  // shift = negative
+    
+    charges.push({ x, y, q });
+    console.log(`⚡ placed ${q > 0 ? '+' : '-'} charge at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+});
+
+// Animation loop
+function animate() {
+    // Phosphor fade effect
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Update particles
+    for (let p of particles) {
+        p.applyForce(charges);
+        p.update();
+        
+        // Bounce off edges
+        if (p.x < 0) p.x = 0, p.vx *= -0.5;
+        if (p.x > 800) p.x = 800, p.vx *= -0.5;
+        if (p.y < 0) p.y = 0, p.vy *= -0.5;
+        if (p.y > 600) p.y = 600, p.vy *= -0.5;
+        
+        p.draw();
+    }
+    
+    // Draw charges
+    for (let c of charges) {
+        const color = c.q > 0 ? '#ff0000' : '#0000ff';
+        
+        // Glow
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        
+        // Charge
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Label
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px Courier New';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(c.q > 0 ? '+' : '−', c.x, c.y);
+    }
+    
+    requestAnimationFrame(animate);
+}
+
+animate();
+console.log('✅ animation started');
         </script>
         </body>
 </html>
