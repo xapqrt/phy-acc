@@ -76,6 +76,9 @@ class Particle {
 
 console.log('particle phy loaded');
 
+// Mode switching
+let currentMode = 'coulomb';  // 'coulomb' or 'rf'
+
 // Arrays for particles and charges
 let particles = [];
 let charges = [];
@@ -97,10 +100,39 @@ function spawnParticles() {
 
 spawnParticles();
 
+// Mode switching buttons
+document.getElementById('coulombModeBtn').addEventListener('click', () => {
+    currentMode = 'coulomb';
+    document.getElementById('coulombModeBtn').classList.add('active');
+    document.getElementById('rfModeBtn').classList.remove('active');
+    document.getElementById('modeInfo').textContent = 'Click: +charge | Shift+Click: -charge';
+    console.log('switched to coulomb mode');
+});
+
+document.getElementById('rfModeBtn').addEventListener('click', () => {
+    currentMode = 'rf';
+    document.getElementById('rfModeBtn').classList.add('active');
+    document.getElementById('coulombModeBtn').classList.remove('active');
+    document.getElementById('modeInfo').textContent = 'Click: place transmitter | Shift+Click: place receiver';
+    
+    // Clear coulomb stuff
+    charges = [];
+    particles = [];
+    
+    console.log('switched to RF mode');
+});
+
 // Clear button
 document.getElementById('clearBtn').addEventListener('click', () => {
-    charges = [];
-    console.log('cleared all charges');
+    if(currentMode === 'coulomb') {
+        charges = [];
+        console.log('cleared all charges');
+    } else {
+        transmitters = [];
+        receivers = [];
+        waveParticles = [];
+        console.log('cleared RF components');
+    }
 });
 
 // Field line toggle button
@@ -133,7 +165,7 @@ volumeSlider.addEventListener('input', (e) => {
     }
 });
 
-// Mouse click to place charges
+// Mouse click to place charges/transmitters
 canvas.addEventListener('mousedown', (e) => {
     // Init audio on first user interaction
     if (!audioContext) {
@@ -144,36 +176,48 @@ canvas.addEventListener('mousedown', (e) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Right click to remove nearest charge
-    if(e.button === 2) {
-        let nearestDist = 20;  // max distance to remove
-        let nearestIdx = -1;
-        
-        for(let i = 0; i < charges.length; i++) {
-            const dx = x - charges[i].x;
-            const dy = y - charges[i].y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
+    if(currentMode === 'coulomb') {
+        // Right click to remove nearest charge
+        if(e.button === 2) {
+            let nearestDist = 20;  // max distance to remove
+            let nearestIdx = -1;
             
-            if(dist < nearestDist) {
-                nearestDist = dist;
-                nearestIdx = i;
+            for(let i = 0; i < charges.length; i++) {
+                const dx = x - charges[i].x;
+                const dy = y - charges[i].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if(dist < nearestDist) {
+                    nearestDist = dist;
+                    nearestIdx = i;
+                }
             }
+            
+            if(nearestIdx !== -1) {
+                charges.splice(nearestIdx, 1);
+                console.log('removed charge at index ' + nearestIdx);
+            }
+            
+            e.preventDefault();  // prevent context menu
+            return;
         }
         
-        if(nearestIdx !== -1) {
-            charges.splice(nearestIdx, 1);
-            console.log('removed charge at index ' + nearestIdx);
-        }
+        // Left click to place charge
+        const q = e.shiftKey ? -1 : 1;  // shift = negative
         
-        e.preventDefault();  // prevent context menu
-        return;
+        charges.push({ x, y, q });
+        console.log('placed ' + (q > 0 ? '+' : '-') + ' charge at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
+        
+    } else if(currentMode === 'rf') {
+        // RF mode - place transmitters/receivers
+        if(e.shiftKey) {
+            receivers.push(new Receiver(x, y));
+            console.log('placed receiver at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
+        } else {
+            transmitters.push(new Transmitter(x, y));
+            console.log('placed transmitter at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
+        }
     }
-    
-    // Left click to place charge
-    const q = e.shiftKey ? -1 : 1;  // shift = negative
-    
-    charges.push({ x, y, q });
-    console.log('placed ' + (q > 0 ? '+' : '-') + ' charge at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
 });
 
 // Prevent context menu on canvas
@@ -198,90 +242,85 @@ function animate() {
     fps = Math.round(1000 / delta);
     
     // darker fade for better phosphor trails
-
-
-
     ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
     ctx.fillRect(0, 0, 800, 600);
     
-
-
-
-    if (showFieldLines && charges.length > 0) {
-        drawFieldVectors();
-    }
-    
-    // Update particles
-
-
-    for (let p of particles) {
-        p.applyForce(charges);
-        p.update();
+    if(currentMode === 'coulomb') {
+        // Coulomb mode
+        if (showFieldLines && charges.length > 0) {
+            drawFieldVectors();
+        }
         
-
-
-        // Bounce off edges
-        if (p.x < 0) p.x = 0, p.vx *= -0.5;
-
-        if (p.x > 800) p.x = 800, p.vx *= -0.5;
-        if (p.y < 0) p.y = 0, p.vy *= -0.5;
-
-        if (p.y > 600) p.y = 600, p.vy *= -0.5;
+        // Update particles
+        for (let p of particles) {
+            p.applyForce(charges);
+            p.update();
+            
+            // Bounce off edges
+            if (p.x < 0) p.x = 0, p.vx *= -0.5;
+            if (p.x > 800) p.x = 800, p.vx *= -0.5;
+            if (p.y < 0) p.y = 0, p.vy *= -0.5;
+            if (p.y > 600) p.y = 600, p.vy *= -0.5;
+            
+            p.draw();
+        }
         
-        p.draw();
-    }
-    
-    // Draw charges with better glow
-
-
-    for (let c of charges) {
-        const color = c.q > 0 ? '#ff0000' : '#0000ff';
+        // Draw charges
+        for (let c of charges) {
+            const color = c.q > 0 ? '#ff0000' : '#0000ff';
+            
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.15;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '16px Courier New';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(c.q > 0 ? '+' : '−', c.x, c.y);
+        }
         
-        // Outer glow
-
-
-        ctx.fillStyle = color;
-        ctx.globalAlpha = 0.15;
-        ctx.beginPath();
-
-
-        ctx.arc(c.x, c.y, 20, 0, Math.PI * 2);
-        ctx.fill();
+    } else if(currentMode === 'rf') {
+        // RF waveguide mode
+        for(let tx of transmitters) {
+            tx.update();
+            tx.draw();
+        }
         
-        // middle glow
-
-
-        ctx.globalAlpha = 0.3;
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, 12, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
+        for(let rx of receivers) {
+            rx.update();
+            rx.draw();
+        }
         
-        // Charge core
-        ctx.fillStyle = color;
-
-
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
-        ctx.fill();
-        
-
-        // Label
-        ctx.fillStyle = '#fff';
-
-        ctx.font = '16px Courier New';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(c.q > 0 ? '+' : '−', c.x, c.y);
+        for(let i = waveParticles.length - 1; i >= 0; i--) {
+            const wp = waveParticles[i];
+            wp.update();
+            
+            if(wp.life <= 0 || wp.intensity < 0.01) {
+                waveParticles.splice(i, 1);
+            } else {
+                wp.draw();
+            }
+        }
     }
     
     // Draw FPS counter
-
     ctx.fillStyle = '#00ff00';
     ctx.font = '14px Courier New';
-
     ctx.textAlign = 'left';
-    
     ctx.textBaseline = 'top';
     ctx.fillText('FPS: ' + fps, 10, 10);
     
