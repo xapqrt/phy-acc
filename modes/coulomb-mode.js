@@ -11,8 +11,8 @@ const CoulombMode = {
         constructor(x, y, q) {
             this.x = x;
             this.y = y;
-            this.vx = (Math.random() - 0.5) * 0.5;
-            this.vy = (Math.random() - 0.5) * 0.5;
+            this.vx = 0;
+            this.vy = 0;
             this.q = q;
             this.trail = [];
             this.maxTrail = 8;
@@ -29,8 +29,8 @@ const CoulombMode = {
                 
                 const force = k_force * this.q * c.q / r2;
                 
-                this.vx += force * dx / r * 0.01;
-                this.vy += force * dy / r * 0.01;
+                this.vx += force * dx / r * 0.05;
+                this.vy += force * dy / r * 0.05;
             }
         }
         
@@ -80,7 +80,7 @@ const CoulombMode = {
             this.particles.push(new this.Particle(
                 Math.random() * canvas.width,
                 Math.random() * canvas.height,
-                (Math.random() - 0.5) * 2.0 * this.chargeMagnitude
+                -0.1
             ));
         }
     },
