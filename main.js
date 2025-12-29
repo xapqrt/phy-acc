@@ -108,16 +108,7 @@ window.addEventListener('resize', () => {
 
 // Clear button
 document.getElementById('clearBtn').addEventListener('click', () => {
-    if(currentMode === 'coulomb') {
-        charges = [];
-        spawnParticles();  // respawn particles
-        console.log('cleared all charges, respawned particles');
-    } else if(currentMode === 'rf') {
-        transmitters = [];
-        receivers = [];
-        waveParticles = [];
-        console.log('cleared RF components');
-    }
+    modeManager.clear();
 });
 
 // ========== COULOMB MODE SLIDERS ==========
