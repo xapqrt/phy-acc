@@ -1,6 +1,6 @@
 # field operator
 
-physics sims for the electrostatic/em challenge
+physics sims for the accelerate channel
 
 ## features
 
@@ -19,8 +19,4 @@ just open index.html or host it somewhere
 
 live demo: https://xapqrt.github.io/phy-acc/
 
-## tech
 
-vanilla js, html5 canvas, web audio api
-
-threeproblem aesthetic - dark minimal design
