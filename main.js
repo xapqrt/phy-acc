@@ -1,32 +1,39 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// Coulomb constant (scaled way down for canvas pixels)
-const k = 5000;
-const drag = 0.96;  // increased for smoother settling
+// Set canvas to fill viewport
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Get canvas dimensions
+const canvasWidth = canvas.width;
+const canvasHeight = canvas.height;
+
+const k = 8000;
+const drag = 0.98;  // less drag for more movement
 const phosphor_alpha = 0.12;  // trail fade
 
 class Particle {
     constructor(x, y, q) {
         this.x = x;
         this.y = y;
-        this.vx = 0;
-        this.vy = 0;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
         this.q = q;
-        this.trail = [];  // phosphor trail
-        this.maxTrail = 20;
+        this.trail = [];
+        this.maxTrail = 8;
     }
 
     applyForce(charges) {
         for (let c of charges) {
             const dx = this.x - c.x;
             const dy = this.y - c.y;
-            const r2 = dx*dx + dy*dy + 10;  // was 1, now 10 (less jitter)
+            const r2 = dx*dx + dy*dy + 10;
 
-            if (r2 < 100) continue;  // was 0.1, now 100 (fixed jitter near charges!)
+            if (r2 < 100) continue;
             const r = Math.sqrt(r2);
 
-            const force = k * this.q * c.q / r2;
+            const force = (typeof k_force !== 'undefined' ? k_force : k) * this.q * c.q / r2;
 
             this.vx += force * dx/r * 0.001;
             this.vy += force * dy/r * 0.001;
@@ -47,52 +54,44 @@ class Particle {
     }
 
     draw() {
-        // Color based on velocity (faster = brighter)
         const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
-        const brightness = Math.min(255, 100 + speed * 50);  // scale velocity to brightness
+        const brightness = Math.min(255, 100 + speed * 50);
         
         if (this.trail.length > 1) {
-            ctx.strokeStyle = 'rgb(0,' + Math.floor(brightness) + ',0)';
-            ctx.lineWidth = 1;
-            ctx.globalAlpha = phosphor_alpha;
+            ctx.strokeStyle = 'rgba(240, 147, 251, 0.4)';
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
-
             ctx.moveTo(this.trail[0].x, this.trail[0].y);
-
             for (let i = 1; i < this.trail.length; i++) {
                 ctx.lineTo(this.trail[i].x, this.trail[i].y);
             }
-
             ctx.stroke();
-            ctx.globalAlpha = 1.0;
         }
 
-        ctx.fillStyle = 'rgb(0,' + Math.floor(brightness) + ',0)';
+        ctx.fillStyle = 'rgb(240, ' + Math.floor(brightness) + ', 251)';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
         ctx.fill();
     }
 }
 
-console.log('particle phy loaded');
-
-// Mode switching
-let currentMode = 'coulomb';  // 'coulomb' or 'rf'
+let currentMode = 'coulomb';
 
 // Arrays for particles and charges
 let particles = [];
 let charges = [];
-let particleCount = 2000;
-let showFieldLines = false;  // toggle for field line visualization
+let particleCount = 800;
+let showFieldLines = false;
+let chargeMagnitude = 1.0;
 
 function spawnParticles() {
     particles = [];
 
     for (let i = 0; i < particleCount; i++) {
         particles.push(new Particle(
-            Math.random() * 800,
-            Math.random() * 600,
-            0
+            Math.random() * canvasWidth,
+            Math.random() * canvasHeight,
+            (Math.random() - 0.5) * 0.2 * chargeMagnitude
         ));
     }
     console.log('spawned ' + particleCount + ' particles');
@@ -100,65 +99,20 @@ function spawnParticles() {
 
 spawnParticles();
 
-// Mode switching buttons
-document.getElementById('coulombModeBtn').addEventListener('click', () => {
-    currentMode = 'coulomb';
-    document.getElementById('coulombModeBtn').classList.add('active');
-    document.getElementById('rfModeBtn').classList.remove('active');
-    document.getElementById('scopeModeBtn').classList.remove('active');
-    document.getElementById('tokamakModeBtn').classList.remove('active');
-    document.getElementById('modeInfo').textContent = 'Click: +charge | Shift+Click: -charge';
-    console.log('switched to coulomb mode');
-});
-
-document.getElementById('rfModeBtn').addEventListener('click', () => {
-    currentMode = 'rf';
-    document.getElementById('rfModeBtn').classList.add('active');
-    document.getElementById('coulombModeBtn').classList.remove('active');
-    document.getElementById('scopeModeBtn').classList.remove('active');
-    document.getElementById('tokamakModeBtn').classList.remove('active');
-    document.getElementById('modeInfo').textContent = 'Click: place transmitter | Shift+Click: place receiver';
-    
-    // Clear coulomb stuff
-    charges = [];
-    particles = [];
-    
-    console.log('switched to RF mode');
-});
-
-document.getElementById('scopeModeBtn').addEventListener('click', () => {
-    currentMode = 'scope';
-    document.getElementById('scopeModeBtn').classList.add('active');
-    document.getElementById('coulombModeBtn').classList.remove('active');
-    document.getElementById('rfModeBtn').classList.remove('active');
-    document.getElementById('tokamakModeBtn').classList.remove('active');
-    document.getElementById('modeInfo').textContent = 'Q/W: freq X | A/S: freq Y | Z/X: phase | C/V: amplitude | M: mic';
-    
-    console.log('switched to oscilloscope mode');
-});
-
-document.getElementById('tokamakModeBtn').addEventListener('click', () => {
-    currentMode = 'tokamak';
-    document.getElementById('tokamakModeBtn').classList.add('active');
-    document.getElementById('coulombModeBtn').classList.remove('active');
-    document.getElementById('rfModeBtn').classList.remove('active');
-    document.getElementById('scopeModeBtn').classList.remove('active');
-    document.getElementById('modeInfo').textContent = '1/2: B_toroidal | 3/4: B_poloidal | 5/6: turbulence | R: reset';
-    
-    // Init plasma
-    if(plasmaParticles.length === 0) {
-        spawnPlasma();
-    }
-    
-    console.log('switched to tokamak mode');
+// Handle window resize
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    console.log('canvas resized: ' + canvas.width + 'x' + canvas.height);
 });
 
 // Clear button
 document.getElementById('clearBtn').addEventListener('click', () => {
     if(currentMode === 'coulomb') {
         charges = [];
-        console.log('cleared all charges');
-    } else {
+        spawnParticles();  // respawn particles
+        console.log('cleared all charges, respawned particles');
+    } else if(currentMode === 'rf') {
         transmitters = [];
         receivers = [];
         waveParticles = [];
@@ -166,39 +120,153 @@ document.getElementById('clearBtn').addEventListener('click', () => {
     }
 });
 
-// Field line toggle button
-const fieldLineBtn = document.getElementById('fieldLineBtn');
-fieldLineBtn.addEventListener('click', () => {
-    showFieldLines = !showFieldLines;
-    fieldLineBtn.textContent = showFieldLines ? 'Hide Field Lines' : 'Show Field Lines';
-    console.log('field lines: ' + (showFieldLines ? 'ON' : 'OFF'));
-});
+// ========== COULOMB MODE SLIDERS ==========
+const chargeSlider = document.getElementById('chargeSlider');
+const chargeLabel = document.getElementById('chargeLabel');
 
-// Particle count slider
-const slider = document.getElementById('particleSlider');
-const countLabel = document.getElementById('countLabel');
+if (chargeSlider) {
+    chargeSlider.addEventListener('input', (e) => {
+        chargeMagnitude = parseFloat(e.target.value);
+        chargeLabel.textContent = 'CHARGE: ' + chargeMagnitude.toFixed(1) + 'x';
+        console.log('charge magnitude set to ' + chargeMagnitude + 'x');
+    });
+}
 
-slider.addEventListener('input', (e) => {
-    particleCount = parseInt(e.target.value);
-    countLabel.textContent = 'Particles: ' + particleCount;
-    spawnParticles();
-});
+const particleSlider = document.getElementById('particleSlider');
+const particleLabel = document.getElementById('particleLabel');
 
-// Volume slider
-const volumeSlider = document.getElementById('volumeSlider');
-const volumeLabel = document.getElementById('volumeLabel');
+if (particleSlider) {
+    particleSlider.addEventListener('input', (e) => {
+        particleCount = parseInt(e.target.value);
+        particleLabel.textContent = 'PARTICLES: ' + particleCount;
+        spawnParticles();
+        console.log('particle count set to ' + particleCount);
+    });
+}
 
-volumeSlider.addEventListener('input', (e) => {
-    const vol = parseInt(e.target.value);
-    volumeLabel.textContent = 'Volume: ' + vol + '%';
-    if (gainNode) {
-        gainNode.gain.value = vol / 100 * 0.3;  // scale to reasonable range
-    }
-});
+const forceSlider = document.getElementById('forceSlider');
+const forceLabel = document.getElementById('forceLabel');
+let k_force = 8000;
 
-// Mouse click to place charges/transmitters
+if (forceSlider) {
+    forceSlider.addEventListener('input', (e) => {
+        k_force = parseInt(e.target.value);
+        forceLabel.textContent = 'FORCE: ' + k_force;
+    });
+}
+
+const waveSpeedSlider = document.getElementById('waveSpeedSlider');
+const waveSpeedLabel = document.getElementById('waveSpeedLabel');
+
+if (waveSpeedSlider) {
+    waveSpeedSlider.addEventListener('input', (e) => {
+        const speed = parseFloat(e.target.value);
+        waveSpeedLabel.textContent = 'WAVE SPEED: ' + speed;
+        if (typeof wave_speed !== 'undefined') {
+            window.wave_speed = speed;
+        }
+    });
+}
+
+const emitRateSlider = document.getElementById('emitRateSlider');
+const emitRateLabel = document.getElementById('emitRateLabel');
+
+if (emitRateSlider) {
+    emitRateSlider.addEventListener('input', (e) => {
+        const rate = parseInt(e.target.value);
+        emitRateLabel.textContent = 'EMIT RATE: ' + rate;
+        for (let tx of transmitters) {
+            tx.emitRate = rate;
+        }
+    });
+}
+
+const decaySlider = document.getElementById('decaySlider');
+const decayLabel = document.getElementById('decayLabel');
+
+if (decaySlider) {
+    decaySlider.addEventListener('input', (e) => {
+        const decay = parseFloat(e.target.value);
+        decayLabel.textContent = 'WAVE DECAY: ' + decay.toFixed(2);
+        if (typeof wave_decay !== 'undefined') {
+            window.wave_decay = decay;
+        }
+    });
+}
+
+const freqXSlider = document.getElementById('freqXSlider');
+const freqXLabel = document.getElementById('freqXLabel');
+
+if (freqXSlider) {
+    freqXSlider.addEventListener('input', (e) => {
+        freq_x = parseFloat(e.target.value);
+        freqXLabel.textContent = 'FREQ X: ' + freq_x.toFixed(1) + ' Hz';
+    });
+}
+
+const freqYSlider = document.getElementById('freqYSlider');
+const freqYLabel = document.getElementById('freqYLabel');
+
+if (freqYSlider) {
+    freqYSlider.addEventListener('input', (e) => {
+        freq_y = parseFloat(e.target.value);
+        freqYLabel.textContent = 'FREQ Y: ' + freq_y.toFixed(1) + ' Hz';
+    });
+}
+
+const phaseSlider = document.getElementById('phaseSlider');
+const phaseLabel = document.getElementById('phaseLabel');
+
+if (phaseSlider) {
+    phaseSlider.addEventListener('input', (e) => {
+        const degrees = parseInt(e.target.value);
+        phase = degrees * Math.PI / 180;
+        phaseLabel.textContent = 'PHASE: ' + degrees + '°';
+    });
+}
+
+const ampSlider = document.getElementById('ampSlider');
+const ampLabel = document.getElementById('ampLabel');
+
+if (ampSlider) {
+    ampSlider.addEventListener('input', (e) => {
+        amplitude = parseInt(e.target.value);
+        ampLabel.textContent = 'AMPLITUDE: ' + amplitude;
+    });
+}
+
+const bToroidalSlider = document.getElementById('bToroidalSlider');
+const bToroidalLabel = document.getElementById('bToroidalLabel');
+
+if (bToroidalSlider) {
+    bToroidalSlider.addEventListener('input', (e) => {
+        B_toroidal = parseFloat(e.target.value);
+        bToroidalLabel.textContent = 'B_TOROIDAL: ' + B_toroidal.toFixed(2) + ' T';
+        console.log('B_toroidal set to ' + B_toroidal.toFixed(2) + ' T');
+    });
+}
+
+const bPoloidalSlider = document.getElementById('bPoloidalSlider');
+const bPoloidalLabel = document.getElementById('bPoloidalLabel');
+
+if (bPoloidalSlider) {
+    bPoloidalSlider.addEventListener('input', (e) => {
+        B_poloidal = parseFloat(e.target.value);
+        bPoloidalLabel.textContent = 'B_POLOIDAL: ' + B_poloidal.toFixed(2) + ' T';
+    });
+}
+
+const turbulenceSlider = document.getElementById('turbulenceSlider');
+const turbulenceLabel = document.getElementById('turbulenceLabel');
+
+if (turbulenceSlider) {
+    turbulenceSlider.addEventListener('input', (e) => {
+        turbulence = parseFloat(e.target.value);
+        turbulenceLabel.textContent = 'TURBULENCE: ' + turbulence.toFixed(2);
+    });
+}
+
 canvas.addEventListener('mousedown', (e) => {
-    // Init audio on first user interaction
     if (!audioContext) {
         initAudio();
     }
@@ -208,59 +276,27 @@ canvas.addEventListener('mousedown', (e) => {
     const y = e.clientY - rect.top;
     
     if(currentMode === 'coulomb') {
-        // Right click to remove nearest charge
-        if(e.button === 2) {
-            let nearestDist = 20;  // max distance to remove
-            let nearestIdx = -1;
-            
-            for(let i = 0; i < charges.length; i++) {
-                const dx = x - charges[i].x;
-                const dy = y - charges[i].y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if(dist < nearestDist) {
-                    nearestDist = dist;
-                    nearestIdx = i;
-                }
-            }
-            
-            if(nearestIdx !== -1) {
-                charges.splice(nearestIdx, 1);
-                console.log('removed charge at index ' + nearestIdx);
-            }
-            
-            e.preventDefault();  // prevent context menu
-            return;
-        }
-        
-        // Left click to place charge
-        const q = e.shiftKey ? -1 : 1;  // shift = negative
+        const q = (e.button === 2) ? -1 * chargeMagnitude : 1 * chargeMagnitude;
         
         charges.push({ x, y, q });
-        console.log('placed ' + (q > 0 ? '+' : '-') + ' charge at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
+        playSpark();
         
     } else if(currentMode === 'rf') {
-        // RF mode - place transmitters/receivers
-        if(e.shiftKey) {
+        if(e.button === 2) {
             receivers.push(new Receiver(x, y));
-            console.log('placed receiver at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
         } else {
             transmitters.push(new Transmitter(x, y));
-            console.log('placed transmitter at (' + x.toFixed(0) + ', ' + y.toFixed(0) + ')');
         }
     }
 });
 
-// Prevent context menu on canvas
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
 });
 
-// FPS counter
 let lastTime = performance.now();
 let fps = 60;
 
-// Animation loop
 function animate() {
     
 
@@ -272,60 +308,54 @@ function animate() {
 
     fps = Math.round(1000 / delta);
     
-    // darker fade for better phosphor trails
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-    ctx.fillRect(0, 0, 800, 600);
+    ctx.fillStyle = 'rgba(10, 10, 15, 0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     if(currentMode === 'coulomb') {
-        // Coulomb mode
         if (showFieldLines && charges.length > 0) {
             drawFieldVectors();
         }
         
-        // Update particles
         for (let p of particles) {
-            p.applyForce(charges);
+            if(charges.length > 0) {
+                p.applyForce(charges);
+            }
             p.update();
             
-            // Bounce off edges
             if (p.x < 0) p.x = 0, p.vx *= -0.5;
-            if (p.x > 800) p.x = 800, p.vx *= -0.5;
+            if (p.x > canvas.width) p.x = canvas.width, p.vx *= -0.5;
             if (p.y < 0) p.y = 0, p.vy *= -0.5;
-            if (p.y > 600) p.y = 600, p.vy *= -0.5;
+            if (p.y > canvas.height) p.y = canvas.height, p.vy *= -0.5;
             
             p.draw();
         }
         
-        // Draw charges
         for (let c of charges) {
-            const color = c.q > 0 ? '#ff0000' : '#0000ff';
+            const color1 = c.q > 0 ? '#ff6b6b' : '#4ecdc4';
             
-            ctx.fillStyle = color;
-            ctx.globalAlpha = 0.15;
+            ctx.fillStyle = c.q > 0 ? 'rgba(255, 107, 107, 0.3)' : 'rgba(78, 205, 196, 0.3)';
             ctx.beginPath();
-            ctx.arc(c.x, c.y, 20, 0, Math.PI * 2);
+            ctx.arc(c.x, c.y, 22, 0, Math.PI * 2);
             ctx.fill();
             
-            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = c.q > 0 ? 'rgba(255, 107, 107, 0.6)' : 'rgba(78, 205, 196, 0.6)';
             ctx.beginPath();
-            ctx.arc(c.x, c.y, 12, 0, Math.PI * 2);
+            ctx.arc(c.x, c.y, 14, 0, Math.PI * 2);
             ctx.fill();
-            ctx.globalAlpha = 1.0;
             
-            ctx.fillStyle = color;
+            ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
             ctx.fill();
             
-            ctx.fillStyle = '#fff';
-            ctx.font = '16px Courier New';
+            ctx.fillStyle = color1;
+            ctx.font = 'bold 18px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(c.q > 0 ? '+' : '−', c.x, c.y);
         }
         
     } else if(currentMode === 'rf') {
-        // RF waveguide mode
         for(let tx of transmitters) {
             tx.update();
             tx.draw();
@@ -347,7 +377,6 @@ function animate() {
             }
         }
     } else if(currentMode === 'scope') {
-        // Oscilloscope mode
         if(micActive) {
             drawMicScope();
         } else {
@@ -356,43 +385,36 @@ function animate() {
         
         drawScopeControls();
     } else if(currentMode === 'tokamak') {
-        // update plasma particles with lorentz force  
         let escaped = 0;
         for(let i = plasmaParticles.length - 1; i >= 0; i--) {
-            plasmaParticles[i].update();
+            const contained = plasmaParticles[i].update();
             
-            // check if escaped tokamak (r > 250 basically)
-            let dx = plasmaParticles[i].x - canvas.width/2;
-            let dy = plasmaParticles[i].y - canvas.height/2;
-            let dist_from_center = Math.sqrt(dx*dx + dy*dy);
-            
-            if(dist_from_center > 250 || dist_from_center < 100) {
-                plasmaParticles.splice(i, 1);  
+            if(!contained) {
+                plasmaParticles.splice(i, 1);
                 escaped++;
-            } 
+            }
         }
         
-        // integrity drops if particles escape
         if(escaped > 0) {
-            integrity -= (escaped / 300) * 0.5;  // lose integrity based on escape rate  
+            integrity -= escaped * 0.2;
             if(integrity < 0) integrity = 0;
         }
         
-        // draw all particles
+        drawTokamak();
+        
         for(let p of plasmaParticles) {
             p.draw();
         }
-        
-        drawTokamak();
-        drawTokamakControls();
     }
     
-    // Draw FPS counter
-    ctx.fillStyle = '#00ff00';
-    ctx.font = '14px Courier New';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(5, 5, 95, 28);
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = '12px Courier New, monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText('FPS: ' + fps, 10, 10);
+    ctx.fillText('FPS: ' + fps, 12, 11);
     
     requestAnimationFrame(animate);
 }
@@ -401,102 +423,60 @@ function animate() {
 
 
 
-//draw vector field arrows at grid points
-
-
-
-function drawFieldvectors() {
-
-
-    const gridSpacing = 50;
+function drawFieldVectors() {
+    const gridSpacing = 60;
     const arrowScale = 0.8;
-
-
-
-    ctx.strokeStyle = 'rgba(0,255,0,0.4)';
-    ctx.fillStyle = 'rgba(0,255,0,0.4)';
 
     ctx.lineWidth = 1.5;
 
-
-
-    for(let x = gridSpacing; x < 800; x += gridSpacing) {
-
-        for(let y = gridSpacing; y < 600; y+= gridSpacing) {
-
-
+    for(let x = gridSpacing; x < canvas.width; x += gridSpacing) {
+        for(let y = gridSpacing; y < canvas.height; y+= gridSpacing) {
             let Ex = 0, Ey = 0;
 
             for (let c of charges) {
-
                 const dx = x - c.x;
                 const dy = y - c.y;
                 const r2 = dx*dx + dy*dy + 10;
 
                 if(r2 < 400) continue;
 
-
                 const r = Math.sqrt(r2);
-
                 const E_mag = k * c.q /r2;
-
 
                 Ex += E_mag * dx /r;
                 Ey += E_mag * dy/r;
-
             }
 
-
-
             const mag = Math.sqrt(Ex*Ex + Ey*Ey);
-
             if(mag < 0.5) continue;
 
-
             const scale = Math.min(gridSpacing * arrowScale, mag * 0.05);
-
             const ex = Ex / mag * scale;
             const ey = Ey / mag * scale;
 
+            const alpha = Math.min(0.7, mag * 0.002);
+            ctx.strokeStyle = 'rgba(240, 147, 251, ' + alpha + ')';
+            ctx.fillStyle = 'rgba(240, 147, 251, ' + alpha + ')';
 
             ctx.beginPath();
             ctx.moveTo(x, y);
-
             ctx.lineTo(x + ex, y + ey);
             ctx.stroke();
 
-
-
-
-            const angle = Math.atan2(ey, ex)
+            const angle = Math.atan2(ey, ex);
             const headLen = 4;
             ctx.beginPath();
-            ctx.moveTo(x + ex, y+ ey);
-
-
-            ctx.ineTo (
-
-                x+ ex - headLen * Math.cos(angle - Math.PI/6),
-                y + ey- headLen * Math.sin(angle - Math.PI/6)
-            );
-
-
-
-
             ctx.moveTo(x + ex, y + ey);
-
             ctx.lineTo(
-
-                x + ex - headLen * Math.cos(angle + Math.PI/6);
-                y + ey - headLen * Math.sin(angle + Math.PI/6);
-
+                x + ex - headLen * Math.cos(angle - Math.PI/6),
+                y + ey - headLen * Math.sin(angle - Math.PI/6)
             );
-
+            ctx.moveTo(x + ex, y + ey);
+            ctx.lineTo(
+                x + ex - headLen * Math.cos(angle + Math.PI/6),
+                y + ey - headLen * Math.sin(angle + Math.PI/6)
+            );
             ctx.stroke();
-
-
-
-
         }
     }
 }
