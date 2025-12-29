@@ -197,25 +197,11 @@ canvas {
 .instruction-content {
     background: rgba(10, 10, 15, 0.95);
     border: 2px solid rgba(0, 255, 150, 0.3);
-    border-radius: 8px;
-    padding: 30px 40px;
+    padding: 30px;
     max-width: 600px;
     max-height: 80vh;
     overflow-y: auto;
     position: relative;
-    box-shadow: 0 0 40px rgba(0, 255, 150, 0.2);
-    animation: slideUp 0.4s ease;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(30px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
 }
 
 .close-instruction {
@@ -225,72 +211,63 @@ canvas {
     background: none;
     border: none;
     color: rgba(255, 255, 255, 0.6);
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
-    transition: all 0.2s;
-    padding: 5px 10px;
+    padding: 5px;
 }
 
 .close-instruction:hover {
-    color: #ff6b6b;
-    transform: rotate(90deg);
+    color: #fff;
 }
 
 .instruction-content h2 {
     color: #0f0;
-    font-size: 20px;
+    font-size: 18px;
     margin-bottom: 20px;
-    letter-spacing: 2px;
-    text-align: center;
-    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .instruction-content p {
-    color: rgba(255, 255, 255, 0.85);
-    line-height: 1.6;
-    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+    margin-bottom: 12px;
     font-size: 13px;
 }
 
 .instruction-content strong {
-    color: #0ff;
-    font-weight: bold;
+    color: #fff;
 }
 
 .instruction-content ul {
-    margin: 10px 0 15px 20px;
-    color: rgba(255, 255, 255, 0.8);
+    margin: 10px 0 12px 20px;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .instruction-content li {
-    margin: 8px 0;
-    line-height: 1.5;
+    margin: 6px 0;
+    line-height: 1.4;
     font-size: 13px;
 }
 
 .got-it-btn {
     display: block;
     width: 100%;
-    margin-top: 25px;
-    padding: 12px;
-    background: rgba(0, 255, 150, 0.1);
-    border: 2px solid rgba(0, 255, 150, 0.4);
+    margin-top: 20px;
+    padding: 10px;
+    background: rgba(0, 255, 150, 0.05);
+    border: 1px solid rgba(0, 255, 150, 0.3);
     color: #0f0;
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    letter-spacing: 2px;
+    font-size: 13px;
+    letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.2s;
 }
 
 .got-it-btn:hover {
-    background: rgba(0, 255, 150, 0.2);
-    border-color: #0f0;
-    box-shadow: 0 0 20px rgba(0, 255, 150, 0.3);
+    background: rgba(0, 255, 150, 0.1);
 }
 
 .instruction-content::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 .instruction-content::-webkit-scrollbar-track {
@@ -298,10 +275,5 @@ canvas {
 }
 
 .instruction-content::-webkit-scrollbar-thumb {
-    background: rgba(0, 255, 150, 0.3);
-    border-radius: 4px;
-}
-
-.instruction-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 255, 150, 0.5);
+    background: rgba(255, 255, 255, 0.2);
 }
