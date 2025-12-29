@@ -29,8 +29,8 @@ const CoulombMode = {
                 
                 const force = k_force * this.q * c.q / r2;
                 
-                this.vx += force * dx / r * 0.001;
-                this.vy += force * dy / r * 0.001;
+                this.vx += force * dx / r * 0.01;
+                this.vy += force * dy / r * 0.01;
             }
         }
         
@@ -80,7 +80,7 @@ const CoulombMode = {
             this.particles.push(new this.Particle(
                 Math.random() * canvas.width,
                 Math.random() * canvas.height,
-                (Math.random() - 0.5) * 0.2 * this.chargeMagnitude
+                (Math.random() - 0.5) * 2.0 * this.chargeMagnitude
             ));
         }
     },
