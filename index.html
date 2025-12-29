@@ -1,46 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Field Operator</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>field operator</title>
+    <link rel="stylesheet" href="landing.css">
 </head>
 <body>
-    <h1>FIELD OPERATOR</h1>
-    
-    <div class="mode-switch">
-        <button id="coulombModeBtn" class="active">Coulomb Fields</button>
-        <button id="rfModeBtn">RF Waveguide</button>
-        <button id="scopeModeBtn">Oscilloscope</button>
-        <button id="tokamakModeBtn">Tokamak</button>
-    </div>
-    
-    <canvas id="canvas" width="800" height="600"></canvas>
-    <div class="info" id="modeInfo">
-        Click: +charge | Shift+Click: -charge
-    </div>
-    <div class="controls">
-        <button id="clearBtn">Clear All Charges</button>
-        <button id="fieldLineBtn">Show Field Lines</button>
-        <div class="slider-group">
-            <label id="countLabel">Particles: 2000</label>
-            <input type="range" id="particleSlider" min="500" max="5000" step="500" value="2000">
+    <div class="landing-page" id="landing-page">
+        <div class="title-container">
+            <h1 class="main-title">FIELD OPERATOR</h1>
+            <p class="subtitle">physics sims</p>
         </div>
-        <div class="slider-group">
-            <label id="volumeLabel">Volume: 50%</label>
-            <input type="range" id="volumeSlider" min="0" max="100" value="50">
+        
+        <div class="feature-grid">
+            <div class="feature-card" data-mode="coulomb">
+                <h2>COULOMB FIELDS</h2>
+                <p>electrostatics</p>
+            </div>
+            <div class="feature-card" data-mode="rf">
+                <h2>RF WAVEGUIDE</h2>
+                <p>em waves</p>
+            </div>
+            <div class="feature-card" data-mode="scope">
+                <h2>OSCILLOSCOPE</h2>
+                <p>lissajous</p>
+            </div>
+            <div class="feature-card" data-mode="tokamak">
+                <h2>TOKAMAK</h2>
+                <p>fusion plasma</p>
+            </div>
         </div>
     </div>
 
-    <script src="audio.js"></script>
-    <script src="rf-waveguide.js"></script>
-    <script src="oscilloscope.js"></script>
-    <script src="tokamak.js"></script>
-    <script src="main.js"></script>
-    <!---->
+    <script>
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const mode = card.getAttribute('data-mode');
+                window.location.href = 'simulator.html?mode=' + mode;
+            });
+        });
+    </script>
 </body>
 </html>
-
-
-
-
