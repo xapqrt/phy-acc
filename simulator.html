@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>field operator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='index.html'">← BACK</button>
+    
+    <canvas id="canvas"></canvas>
+    <div class="overlay"></div>
+    
+    <div class="mode-indicator" id="modeIndicator">COULOMB</div>
+    
+    <div class="info-panel" id="modeInfo">
+        Left Click: +charge | Right Click: -charge
+    </div>
+    
+
+
+    <!-- Instruction Popup -->
+     
+    <div id="instructionModal" class="instruction-modal">
+        <div class="instruction-content">
+            <button class="close-instruction" onclick="closeInstruction()">✕</button>
+            <h2 id="instructionTitle">FEATURE NAME</h2>
+            <div id="instructionText">
+                <p>Instructions will appear here</p>
+            </div>
+            <button class="got-it-btn" onclick="closeInstruction()">GOT IT</button>
+        </div>
+    </div>
+    
+    <div class="controls-panel">
+        <button id="clearBtn">CLEAR</button>
+        
+        <!-- Coulomb mode sliders -->
+        <div id="coulombSliders" class="mode-sliders" style="display: none;">
+            <div class="slider-control">
+                <label id="chargeLabel">CHARGE: 1.0x</label>
+                <input type="range" id="chargeSlider" min="0.5" max="5" step="0.5" value="1" aria-label="Charge magnitude slider">
+            </div>
+            <div class="slider-control">
+                <label id="particleLabel">PARTICLES: 800</label>
+                <input type="range" id="particleSlider" min="200" max="2000" step="200" value="800" aria-label="Particle count slider">
+            </div>
+            <div class="slider-control">
+                <label id="forceLabel">FORCE: 8000</label>
+                <input type="range" id="forceSlider" min="2000" max="15000" step="1000" value="8000" aria-label="Force strength slider">
+            </div>
+        </div>
+        
+        <!-- RF mode sliders -->
+        <div id="rfSliders" class="mode-sliders" style="display: none;">
+            <div class="slider-control">
+                <label id="waveSpeedLabel">WAVE SPEED: 3</label>
+                <input type="range" id="waveSpeedSlider" min="1" max="10" step="1" value="3" aria-label="Wave speed slider">
+            </div>
+            <div class="slider-control">
+                <label id="emitRateLabel">EMIT RATE: 3</label>
+                <input type="range" id="emitRateSlider" min="1" max="10" step="1" value="3" aria-label="Emit rate slider">
+            </div>
+            <div class="slider-control">
+                <label id="decayLabel">WAVE DECAY: 0.98</label>
+                <input type="range" id="decaySlider" min="0.90" max="0.99" step="0.01" value="0.98" aria-label="Wave decay slider">
+            </div>
+        </div>
+        
+        <!-- Oscilloscope mode sliders -->
+        <div id="scopeSliders" class="mode-sliders" style="display: none;">
+            <div class="slider-control">
+                <label id="freqXLabel">FREQ X: 1.0 Hz</label>
+                <input type="range" id="freqXSlider" min="0.5" max="10" step="0.5" value="1" aria-label="Frequency X slider">
+            </div>
+            <div class="slider-control">
+                <label id="freqYLabel">FREQ Y: 2.0 Hz</label>
+                <input type="range" id="freqYSlider" min="0.5" max="10" step="0.5" value="2" aria-label="Frequency Y slider">
+            </div>
+            <div class="slider-control">
+                <label id="phaseLabel">PHASE: 0°</label>
+                <input type="range" id="phaseSlider" min="0" max="360" step="15" value="0" aria-label="Phase slider">
+            </div>
+            <div class="slider-control">
+                <label id="ampLabel">AMPLITUDE: 150</label>
+                <input type="range" id="ampSlider" min="50" max="250" step="10" value="150" aria-label="Amplitude slider">
+            </div>
+        </div>
+        
+        <!-- Tokamak mode sliders -->
+        <div id="tokamakSliders" class="mode-sliders" style="display: none;">
+            <div class="slider-control">
+                <label id="bToroidalLabel">B_TOROIDAL: 1.50 T</label>
+                <input type="range" id="bToroidalSlider" min="0" max="4" step="0.1" value="1.5" aria-label="Toroidal field slider">
+            </div>
+            <div class="slider-control">
+                <label id="bPoloidalLabel">B_POLOIDAL: 1.00 T</label>
+                <input type="range" id="bPoloidalSlider" min="0" max="4" step="0.1" value="1.0" aria-label="Poloidal field slider">
+            </div>
+            <div class="slider-control">
+                <label id="turbulenceLabel">TURBULENCE: 0.15</label>
+                <input type="range" id="turbulenceSlider" min="0" max="1.5" step="0.05" value="0.15" aria-label="Turbulence slider">
+            </div>
+        </div>
+    </div>
+
+    <!-- Keep audio.js for sound effects -->
+    <script src="audio.js"></script>
+    
+    <script>
+        // Instruction popup functions
+        function showInstruction(mode) {
+            const modal = document.getElementById('instructionModal');
+            const title = document.getElementById('instructionTitle');
+            const text = document.getElementById('instructionText');
+            
+            const instructions = {
+                'coulomb': {
+                    title: '⚡ COULOMB FIELDS',
+                    text: `
+                        <p><strong>What it does:</strong> Simulates electric field interactions between charged particles using Coulomb's Law (F = k×q₁×q₂/r²)</p>
+                        
+                        <p><strong>How to use:</strong></p>
+                        <ul>
+                            <li><strong>Left Click:</strong> Place positive charge (+)</li>
+                            <li><strong>Right Click:</strong> Place negative charge (−)</li>
+                            <li><strong>CLEAR button:</strong> Remove all charges</li>
+                        </ul>
+                        
+                        <p><strong>Sliders:</strong></p>
+                        <ul>
+                            <li><strong>CHARGE:</strong> Control strength of charges you place</li>
+                            <li><strong>PARTICLES:</strong> Number of particles in the simulation</li>
+                            <li><strong>FORCE:</strong> Electromagnetic force constant (k)</li>
+                        </ul>
+                        
+                        <p><strong>Watch for:</strong> Pink particle trails showing field patterns, particles accelerating toward/away from charges</p>
+                    `
+                },
+                'rf': {
+                    title: '📡 RF WAVEGUIDE',
+                    text: `
+                        <p><strong>What it does:</strong> Simulates radio frequency electromagnetic wave propagation with transmitters and receivers</p>
+                        
+                        <p><strong>How to use:</strong></p>
+                        <ul>
+                            <li><strong>Left Click:</strong> Place TX transmitter (orange)</li>
+                            <li><strong>Right Click:</strong> Place RX receiver (green)</li>
+                            <li><strong>CLEAR button:</strong> Remove all devices</li>
+                        </ul>
+                        
+                        <p><strong>Sliders:</strong></p>
+                        <ul>
+                            <li><strong>WAVE SPEED:</strong> How fast waves propagate (1-10)</li>
+                            <li><strong>EMIT RATE:</strong> Frequency of wave bursts from TX (1-10)</li>
+                            <li><strong>WAVE DECAY:</strong> How quickly waves fade (0.90-0.99)</li>
+                        </ul>
+                        
+                        <p><strong>Watch for:</strong> Blue waves radiating from transmitters, receivers glowing when hit by waves, signal strength bars</p>
+                    `
+                },
+                'scope': {
+                    title: '🌀 OSCILLOSCOPE',
+                    text: `
+                        <p><strong>What it does:</strong> Visualizes Lissajous figures (parametric curves) and microphone audio in XY mode</p>
+                        
+                        <p><strong>Keyboard controls:</strong></p>
+                        <ul>
+                            <li><strong>Q/W:</strong> Decrease/increase X frequency</li>
+                            <li><strong>A/S:</strong> Decrease/increase Y frequency</li>
+                            <li><strong>Z/X:</strong> Decrease/increase phase shift</li>
+                            <li><strong>C/V:</strong> Decrease/increase amplitude</li>
+                            <li><strong>M:</strong> Toggle microphone input on/off</li>
+                        </ul>
+                        
+                        <p><strong>Sliders:</strong></p>
+                        <ul>
+                            <li><strong>FREQ X/Y:</strong> Control X and Y frequencies (0.5-10 Hz)</li>
+                            <li><strong>PHASE:</strong> Phase shift between X and Y (0-360°)</li>
+                            <li><strong>AMPLITUDE:</strong> Size of the pattern (50-250)</li>
+                        </ul>
+                        
+                        <p><strong>Try:</strong> freq_x=1, freq_y=2 for figure-8 | Equal frequencies for circles | Press M and speak/play music!</p>
+                    `
+                },
+                'tokamak': {
+                    title: '🌟 TOKAMAK FUSION REACTOR',
+                    text: `
+                        <p><strong>What it does:</strong> Simulates magnetic confinement of fusion plasma using toroidal and poloidal magnetic fields</p>
+                        
+                        <p><strong>Keyboard controls:</strong></p>
+                        <ul>
+                            <li><strong>1/2:</strong> Decrease/increase toroidal field (B_tor)</li>
+                            <li><strong>3/4:</strong> Decrease/increase poloidal field (B_pol)</li>
+                            <li><strong>5/6:</strong> Decrease/increase turbulence</li>
+                            <li><strong>R:</strong> Reset plasma / inject new particles</li>
+                        </ul>
+                        
+                        <p><strong>Sliders:</strong></p>
+                        <ul>
+                            <li><strong>B_TOROIDAL:</strong> Stabilizes plasma rotation (0-4 Tesla)</li>
+                            <li><strong>B_POLOIDAL:</strong> Confines plasma radially (0-4 Tesla)</li>
+                            <li><strong>TURBULENCE:</strong> Plasma instability level (0-1.5)</li>
+                        </ul>
+                        
+                        <p><strong>Goal:</strong> Keep plasma in the green zone! Try B_tor=1.5, B_pol=1.0 for stable confinement. Watch integrity - if it drops to 0, reactor fails!</p>
+                    `
+                }
+            };
+            
+            title.textContent = instructions[mode].title;
+            text.innerHTML = instructions[mode].text;
+            modal.style.display = 'flex';
+        }
+        
+        function closeInstruction() {
+            document.getElementById('instructionModal').style.display = 'none';
+        }
+        
+        // Get mode from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialMode = urlParams.get('mode') || 'coulomb';
+        
+        // Set initial mode info display
+        const modeNames = {
+            'coulomb': 'COULOMB FIELDS',
+            'rf': 'RF WAVEGUIDE',
+            'scope': 'OSCILLOSCOPE',
+            'tokamak': 'TOKAMAK'
+        };
+        
+        const modeInstructions = {
+            'coulomb': 'Left Click: +charge | Right Click: -charge',
+            'rf': 'Left Click: TX transmitter | Right Click: RX receiver',
+            'scope': 'Q/W: freq X | A/S: freq Y | Z/X: phase | M: mic',
+            'tokamak': '1/2: B_toroidal | 3/4: B_poloidal | R: reset'
+        };
+        
+        // Setup canvas
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Store canvas globally for modes to access
+        window.canvas = canvas;
+        
+        // Set initial mode display
+        document.getElementById('modeIndicator').textContent = modeNames[initialMode];
+        document.getElementById('modeInfo').textContent = modeInstructions[initialMode];
+    </script>
+    
+    <!-- Modular Mode System -->
+    <script src="modes/coulomb-mode.js"></script>
+    <script src="modes/rf-mode.js"></script>
+    <script src="modes/scope-mode.js"></script>
+    <script src="modes/tokamak-mode.js"></script>
+    <script src="modes/mode-manager.js"></script>
+    
+    <!-- Animation Loop -->
+    <script>
+        // Initialize mode manager when page loads
+        window.addEventListener('load', () => {
+            ModeManager.init();
+        });
+        
+        function animate() {
+            const ctx = canvas.getContext('2d');
+            
+            // Clear
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw current mode
+            ModeManager.update(canvas);
+            ModeManager.draw(ctx, canvas);
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
+        
+        // Handle left clicks
+        canvas.addEventListener('click', (e) => {
+            ModeManager.handleClick(e, canvas);
+        });
+        
+        // Handle right clicks (prevent context menu)
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            ModeManager.handleClick(e, canvas);
+        });
+    </script>
+</body>
+</html>
+
+
+
+

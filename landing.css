@@ -1,0 +1,100 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a0f;
+    overflow: hidden;
+    font-family: 'Courier New', Courier, monospace;
+    color: #fff;
+}
+
+.landing-page {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, #0f0f1a 0%, #05050a 100%);
+}
+
+.title-container {
+    margin-bottom: 80px;
+    text-align: center;
+}
+
+.main-title {
+    font-size: 56px;
+    font-weight: 300;
+    letter-spacing: 16px;
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.subtitle {
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 650px;
+}
+
+.feature-card {
+    padding: 45px 35px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.feature-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-5px);
+}
+
+.feature-card h2 {
+    font-size: 17px;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+    color: #fff;
+    font-weight: 400;
+}
+
+.feature-card p {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.feature-card:nth-child(1):hover { border-color: #ff6b9d; }
+.feature-card:nth-child(2):hover { border-color: #00bfff; }
+.feature-card:nth-child(3):hover { border-color: #7fff00; }
+.feature-card:nth-child(4):hover { border-color: #ffaa00; }
+
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 36px;
+        letter-spacing: 8px;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        max-width: 350px;
+    }
+    
+    .feature-card {
+        padding: 35px 25px;
+    }
+}
